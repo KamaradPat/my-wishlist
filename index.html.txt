@@ -1,0 +1,1038 @@
+import React, { useState, useEffect } from 'react';
+import {
+  Cpu,
+  HardDrive,
+  Monitor,
+  Gamepad2,
+  Plus,
+  Search,
+  Trash2,
+  ExternalLink,
+  ShoppingBag,
+  CheckCircle,
+  Clock,
+  AlertTriangle,
+  Zap,
+  DollarSign,
+  X,
+  Edit2,
+  Layers,
+  Sparkles,
+  Server,
+  Box,
+  Power,
+  Fan
+} from 'lucide-react';
+
+// --- INITIAL DEFAULT DATA ---
+const DEFAULT_PC_BUILD = [
+  {
+    id: '1',
+    name: 'Intel Core i7-9700F',
+    category: 'Processor (CPU)',
+    price: 4990,
+    store: 'Alza.cz',
+    url: 'https://www.alza.cz',
+    status: 'ACTIVE'
+  },
+  {
+    id: '2',
+    name: 'SilentiumPC Fera 5',
+    category: 'CPU Cooler',
+    price: 790,
+    store: 'Alza.cz',
+    url: 'https://www.alza.cz',
+    status: 'ACTIVE'
+  },
+  {
+    id: '3',
+    name: 'Gigabyte B365 M AORUS ELITE',
+    category: 'Motherboard',
+    price: 2490,
+    store: 'DATART',
+    url: 'https://www.datart.cz',
+    status: 'ACTIVE'
+  },
+  {
+    id: '4',
+    name: 'NVIDIA GeForce RTX 2060 Super 8GB',
+    category: 'Graphics Card (GPU)',
+    price: 8990,
+    store: 'Alza.cz',
+    url: 'https://www.alza.cz',
+    status: 'UPGRADE SOON'
+  },
+  {
+    id: '5',
+    name: 'HyperX Fury 16GB DDR4 3200MHz',
+    category: 'RAM Memory',
+    price: 1290,
+    store: 'Alza.cz',
+    url: 'https://www.alza.cz',
+    status: 'ACTIVE'
+  },
+  {
+    id: '6',
+    name: 'Kingston NV2 1TB NVMe M.2 SSD',
+    category: 'Storage (SSD / HDD)',
+    price: 1890,
+    store: 'DATART',
+    url: 'https://www.datart.cz',
+    status: 'ACTIVE'
+  },
+  {
+    id: '7',
+    name: 'NZXT H5 Flow Black',
+    category: 'PC Case',
+    price: 2190,
+    store: 'Alza.cz',
+    url: 'https://www.alza.cz',
+    status: 'ACTIVE'
+  },
+  {
+    id: '8',
+    name: 'Corsair RM650 650W 80+ Gold',
+    category: 'Power Supply (PSU)',
+    price: 2390,
+    store: 'DATART',
+    url: 'https://www.datart.cz',
+    status: 'ACTIVE'
+  }
+];
+
+const DEFAULT_WISHLIST = [
+  {
+    id: 'w1',
+    name: 'ASUS TUF Gaming GeForce RTX 4070 Super 12GB',
+    category: 'Graphics Card (GPU)',
+    price: 17490,
+    store: 'Alza.cz',
+    url: 'https://www.alza.cz/search.htm?exps=RTX+4070+Super',
+    status: 'Wishlist'
+  },
+  {
+    id: 'w2',
+    name: '32” Odyssey G7 QHD 240Hz Gaming Monitor',
+    category: 'Monitor / Peripherals',
+    price: 13990,
+    store: 'DATART',
+    url: 'https://www.datart.cz',
+    status: 'Wishlist'
+  },
+  {
+    id: 'w3',
+    name: 'Kingston FURY 32GB KIT DDR4 3600MHz',
+    category: 'RAM Memory',
+    price: 2290,
+    store: 'Alza.cz',
+    url: 'https://www.alza.cz',
+    status: 'Purchased'
+  }
+];
+
+const DEFAULT_BACKLOG = [
+  {
+    id: 'g1',
+    title: 'Forza Horizon 5',
+    genre: 'Racing/Sim',
+    platform: 'PC / Steam',
+    status: 'Playing',
+    image: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?w=600&auto=format&fit=crop&q=80'
+  },
+  {
+    id: 'g2',
+    title: 'Euro Truck Simulator 2',
+    genre: 'Racing/Sim',
+    platform: 'PC / Steam',
+    status: 'Playing',
+    image: 'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=600&auto=format&fit=crop&q=80'
+  },
+  {
+    id: 'g3',
+    title: 'Cyberpunk 2077: Phantom Liberty',
+    genre: 'RPG',
+    platform: 'PC / GOG',
+    status: 'Wishlist',
+    image: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=600&auto=format&fit=crop&q=80'
+  },
+  {
+    id: 'g4',
+    title: 'Ready or Not',
+    genre: 'FPS',
+    platform: 'PC / Steam',
+    status: 'Completed',
+    image: 'https://images.unsplash.com/photo-1538481199705-c710c4e965fc?w=600&auto=format&fit=crop&q=80'
+  }
+];
+
+const HARDWARE_CATEGORIES = [
+  'My PC Build',
+  'Processor (CPU)',
+  'CPU Cooler',
+  'Motherboard',
+  'Graphics Card (GPU)',
+  'RAM Memory',
+  'Storage (SSD / HDD)',
+  'PC Case',
+  'Power Supply (PSU)'
+];
+
+const STORES = ['Alza.cz', 'DATART', 'PLANEO Elektro', 'Electro World', 'Other'];
+
+export default function App() {
+  const [activeTab, setActiveTab] = useState('pcbuild');
+
+  // --- LOCAL STORAGE STATE MANAGEMENT ---
+  const [pcBuild, setPcBuild] = useState(() => {
+    const saved = localStorage.getItem('mysetup_pcbuild');
+    return saved ? JSON.parse(saved) : DEFAULT_PC_BUILD;
+  });
+
+  const [wishlist, setWishlist] = useState(() => {
+    const saved = localStorage.getItem('mysetup_wishlist');
+    return saved ? JSON.parse(saved) : DEFAULT_WISHLIST;
+  });
+
+  const [backlog, setBacklog] = useState(() => {
+    const saved = localStorage.getItem('mysetup_backlog');
+    return saved ? JSON.parse(saved) : DEFAULT_BACKLOG;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('mysetup_pcbuild', JSON.stringify(pcBuild));
+  }, [pcBuild]);
+
+  useEffect(() => {
+    localStorage.setItem('mysetup_wishlist', JSON.stringify(wishlist));
+  }, [wishlist]);
+
+  useEffect(() => {
+    localStorage.setItem('mysetup_backlog', JSON.stringify(backlog));
+  }, [backlog]);
+
+  // --- MODAL STATES ---
+  const [isPartModalOpen, setIsPartModalOpen] = useState(false);
+  const [isWishlistModalOpen, setIsWishlistModalOpen] = useState(false);
+  const [isGameModalOpen, setIsGameModalOpen] = useState(false);
+
+  // --- FORM STATES ---
+  // Part Form
+  const [partName, setPartName] = useState('');
+  const [partCategory, setPartCategory] = useState('My PC Build');
+  const [partPrice, setPartPrice] = useState('');
+  const [partStore, setPartStore] = useState('Alza.cz');
+  const [partUrl, setPartUrl] = useState('');
+  const [partStatus, setPartStatus] = useState('ACTIVE');
+
+  // Wishlist Form
+  const [wishName, setWishName] = useState('');
+  const [wishCategory, setWishCategory] = useState('Graphics Card (GPU)');
+  const [wishPrice, setWishPrice] = useState('');
+  const [wishStore, setWishStore] = useState('Alza.cz');
+  const [wishUrl, setWishUrl] = useState('');
+
+  // Game Form
+  const [gameTitle, setGameTitle] = useState('');
+  const [gameGenre, setGameGenre] = useState('Racing/Sim');
+  const [gamePlatform, setGamePlatform] = useState('PC / Steam');
+  const [gameStatus, setGameStatus] = useState('Wishlist');
+  const [gameImage, setGameImage] = useState('');
+
+  // Search & Filter States
+  const [gameSearch, setGameSearch] = useState('');
+  const [selectedGenre, setSelectedGenre] = useState('All');
+
+  // Helper Quick Search Links
+  const openAlzaSearch = (term) => {
+    if (!term) return;
+    window.open(`https://www.alza.cz/search.htm?exps=${encodeURIComponent(term)}`, '_blank');
+  };
+
+  const openDatartSearch = (term) => {
+    if (!term) return;
+    window.open(`https://www.datart.cz/vyhledavani?q=${encodeURIComponent(term)}`, '_blank');
+  };
+
+  // --- ADD HANDLERS ---
+  const handleAddPart = (e) => {
+    e.preventDefault();
+    if (!partName.trim()) return;
+    const newItem = {
+      id: Date.now().toString(),
+      name: partName,
+      category: partCategory,
+      price: Number(partPrice) || 0,
+      store: partStore,
+      url: partUrl.trim() || '#',
+      status: partStatus
+    };
+    setPcBuild([...pcBuild, newItem]);
+    setPartName('');
+    setPartPrice('');
+    setPartUrl('');
+    setIsPartModalOpen(false);
+  };
+
+  const handleAddWishlist = (e) => {
+    e.preventDefault();
+    if (!wishName.trim()) return;
+    const newItem = {
+      id: Date.now().toString(),
+      name: wishName,
+      category: wishCategory,
+      price: Number(wishPrice) || 0,
+      store: wishStore,
+      url: wishUrl.trim() || '#',
+      status: 'Wishlist'
+    };
+    setWishlist([...wishlist, newItem]);
+    setWishName('');
+    setWishPrice('');
+    setWishUrl('');
+    setIsWishlistModalOpen(false);
+  };
+
+  const handleAddGame = (e) => {
+    e.preventDefault();
+    if (!gameTitle.trim()) return;
+    const newItem = {
+      id: Date.now().toString(),
+      title: gameTitle,
+      genre: gameGenre,
+      platform: gamePlatform,
+      status: gameStatus,
+      image: gameImage.trim() || 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=600&auto=format&fit=crop&q=80'
+    };
+    setBacklog([...backlog, newItem]);
+    setGameTitle('');
+    setGameImage('');
+    setIsGameModalOpen(false);
+  };
+
+  // --- DELETE HANDLERS ---
+  const deletePart = (id) => setPcBuild(pcBuild.filter((item) => item.id !== id));
+  const deleteWishlist = (id) => setWishlist(wishlist.filter((item) => item.id !== id));
+  const deleteGame = (id) => setBacklog(backlog.filter((item) => item.id !== id));
+
+  // --- STATUS TOGGLES ---
+  const cyclePartStatus = (id) => {
+    setPcBuild(
+      pcBuild.map((item) => {
+        if (item.id === id) {
+          const next =
+            item.status === 'ACTIVE'
+              ? 'UPGRADE SOON'
+              : item.status === 'UPGRADE SOON'
+              ? 'FAULTY'
+              : 'ACTIVE';
+          return { ...item, status: next };
+        }
+        return item;
+      })
+    );
+  };
+
+  const toggleWishlistStatus = (id) => {
+    setWishlist(
+      wishlist.map((item) => {
+        if (item.id === id) {
+          return {
+            ...item,
+            status: item.status === 'Wishlist' ? 'Purchased' : 'Wishlist'
+          };
+        }
+        return item;
+      })
+    );
+  };
+
+  const cycleGameStatus = (id) => {
+    setBacklog(
+      backlog.map((item) => {
+        if (item.id === id) {
+          const statuses = ['Playing', 'Completed', 'Wishlist', 'On Hold'];
+          const currentIndex = statuses.indexOf(item.status);
+          const nextStatus = statuses[(currentIndex + 1) % statuses.length];
+          return { ...item, status: nextStatus };
+        }
+        return item;
+      })
+    );
+  };
+
+  // --- WISHLIST BUDGET CALCULATIONS ---
+  const totalWishlistCost = wishlist.reduce((sum, item) => sum + Number(item.price), 0);
+  const spentWishlistCost = wishlist
+    .filter((i) => i.status === 'Purchased')
+    .reduce((sum, item) => sum + Number(item.price), 0);
+  const remainingWishlistCost = totalWishlistCost - spentWishlistCost;
+
+  // --- FILTERED GAMES ---
+  const filteredGames = backlog.filter((game) => {
+    const matchesSearch =
+      game.title.toLowerCase().includes(gameSearch.toLowerCase()) ||
+      game.genre.toLowerCase().includes(gameSearch.toLowerCase());
+    const matchesGenre = selectedGenre === 'All' || game.genre === selectedGenre;
+    return matchesSearch && matchesGenre;
+  });
+
+  return (
+    <div className="min-h-screen bg-[#09090b] text-zinc-100 font-sans selection:bg-purple-600 selection:text-white pb-16">
+      {/* BACKGROUND GRID PATTERN */}
+      <div className="fixed inset-0 bg-[linear-gradient(to_right,#18181b_1px,transparent_1px),linear-gradient(to_bottom,#18181b_1px,transparent_1px)] bg-[size:3rem_3rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] pointer-events-none z-0 opacity-40" />
+
+      {/* HEADER & CONTAINER */}
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+        {/* BRANDING HEADER */}
+        <header className="flex flex-col md:flex-row md:items-center md:justify-between pb-8 border-b border-zinc-800/80 gap-4">
+          <div>
+            <h1 className="text-4xl sm:text-5xl font-black tracking-tight flex items-center gap-2">
+              <span className="text-white">My</span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-purple-500 to-indigo-500 drop-shadow-[0_0_25px_rgba(168,85,247,0.4)]">
+                Setup
+              </span>
+            </h1>
+            <p className="text-xs uppercase tracking-widest text-zinc-500 font-bold mt-1">
+              Personal Hardware & Gaming Hub
+            </p>
+          </div>
+
+          {/* TAB NAVIGATION */}
+          <nav className="flex bg-zinc-900/90 p-1.5 rounded-xl border border-zinc-800 shadow-xl backdrop-blur-md">
+            <button
+              onClick={() => setActiveTab('pcbuild')}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all duration-200 ${
+                activeTab === 'pcbuild'
+                  ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30'
+                  : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
+              }`}
+            >
+              <Cpu className="w-4 h-4" />
+              My PC Build
+            </button>
+            <button
+              onClick={() => setActiveTab('wishlist')}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all duration-200 ${
+                activeTab === 'wishlist'
+                  ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30'
+                  : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
+              }`}
+            >
+              <ShoppingBag className="w-4 h-4" />
+              Tech Wishlist
+            </button>
+            <button
+              onClick={() => setActiveTab('backlog')}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-xs font-black uppercase tracking-wider transition-all duration-200 ${
+                activeTab === 'backlog'
+                  ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30'
+                  : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
+              }`}
+            >
+              <Gamepad2 className="w-4 h-4" />
+              Game Backlog
+            </button>
+          </nav>
+        </header>
+
+        {/* TAB 1: MY PC BUILD */}
+        {activeTab === 'pcbuild' && (
+          <main className="mt-8 space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-zinc-900/60 p-4 rounded-2xl border border-zinc-800/80 backdrop-blur-sm">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-purple-950/50 border border-purple-500/30 rounded-xl text-purple-400">
+                  <Server className="w-6 h-6" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-white">Current Rig Components</h2>
+                  <p className="text-xs text-zinc-400">
+                    {pcBuild.length} hardware modules installed
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setIsPartModalOpen(true)}
+                className="flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-sm rounded-xl transition-all shadow-lg shadow-purple-600/20"
+              >
+                <Plus className="w-4 h-4" />
+                Add Part
+              </button>
+            </div>
+
+            {/* HARDWARE GRID */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {pcBuild.map((part) => (
+                <div
+                  key={part.id}
+                  className="group relative bg-zinc-900/70 hover:bg-zinc-900 border border-zinc-800 hover:border-purple-500/50 p-5 rounded-2xl transition-all duration-300 shadow-md hover:shadow-xl hover:shadow-purple-950/20 flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="flex items-center justify-between gap-2 mb-2">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-purple-400 bg-purple-950/60 border border-purple-800/40 px-2.5 py-1 rounded-md">
+                        {part.category}
+                      </span>
+
+                      {/* STATUS BADGE TOGGLE */}
+                      <button
+                        onClick={() => cyclePartStatus(part.id)}
+                        className={`text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-md border cursor-pointer transition-all ${
+                          part.status === 'ACTIVE'
+                            ? 'bg-emerald-950/50 text-emerald-400 border-emerald-800/40 hover:bg-emerald-900/50'
+                            : part.status === 'UPGRADE SOON'
+                            ? 'bg-amber-950/50 text-amber-400 border-amber-800/40 hover:bg-amber-900/50'
+                            : 'bg-rose-950/50 text-rose-400 border-rose-800/40 hover:bg-rose-900/50'
+                        }`}
+                        title="Click to change status"
+                      >
+                        {part.status}
+                      </button>
+                    </div>
+
+                    <h3 className="text-base font-bold text-white group-hover:text-purple-300 transition-colors mt-2">
+                      {part.name}
+                    </h3>
+                  </div>
+
+                  <div className="mt-6 pt-4 border-t border-zinc-800/80 flex items-center justify-between">
+                    <div>
+                      <div className="text-xs font-semibold text-zinc-400 flex items-center gap-1.5">
+                        <span className="inline-block w-2 h-2 rounded-full bg-zinc-600" />
+                        {part.store}
+                      </div>
+                      <div className="text-base font-black text-white mt-0.5">
+                        {part.price > 0 ? `${part.price.toLocaleString('cs-CZ')} Kč` : 'N/A'}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      {part.url && part.url !== '#' && (
+                        <a
+                          href={part.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="p-2 text-zinc-400 hover:text-white bg-zinc-800/60 hover:bg-zinc-700/60 rounded-lg transition-colors"
+                          title="Open Product Link"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                        </a>
+                      )}
+                      <button
+                        onClick={() => deletePart(part.id)}
+                        className="p-2 text-zinc-500 hover:text-rose-400 bg-zinc-800/40 hover:bg-rose-950/40 rounded-lg transition-colors"
+                        title="Delete Part"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </main>
+        )}
+
+        {/* TAB 2: TECH WISHLIST */}
+        {activeTab === 'wishlist' && (
+          <main className="mt-8 space-y-6">
+            {/* BUDGET SUMMARY DASHBOARD */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="bg-zinc-900/70 border border-zinc-800 p-5 rounded-2xl">
+                <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider">
+                  Total Wishlist Value
+                </span>
+                <div className="text-2xl font-black text-white mt-1">
+                  {totalWishlistCost.toLocaleString('cs-CZ')} Kč
+                </div>
+              </div>
+              <div className="bg-zinc-900/70 border border-zinc-800 p-5 rounded-2xl">
+                <span className="text-xs font-bold text-emerald-500 uppercase tracking-wider">
+                  Purchased Amount
+                </span>
+                <div className="text-2xl font-black text-emerald-400 mt-1">
+                  {spentWishlistCost.toLocaleString('cs-CZ')} Kč
+                </div>
+              </div>
+              <div className="bg-zinc-900/70 border border-zinc-800 p-5 rounded-2xl">
+                <span className="text-xs font-bold text-purple-400 uppercase tracking-wider">
+                  Remaining Target
+                </span>
+                <div className="text-2xl font-black text-purple-300 mt-1">
+                  {remainingWishlistCost.toLocaleString('cs-CZ')} Kč
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between bg-zinc-900/60 p-4 rounded-2xl border border-zinc-800/80">
+              <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-purple-400" />
+                Planned Hardware Upgrades
+              </h2>
+              <button
+                onClick={() => setIsWishlistModalOpen(true)}
+                className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-sm rounded-xl transition-all shadow-lg shadow-purple-600/20"
+              >
+                <Plus className="w-4 h-4" />
+                Add Wishlist Item
+              </button>
+            </div>
+
+            {/* WISHLIST GRID */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {wishlist.map((item) => (
+                <div
+                  key={item.id}
+                  className={`relative bg-zinc-900/70 border p-5 rounded-2xl transition-all duration-300 flex flex-col justify-between ${
+                    item.status === 'Purchased'
+                      ? 'border-emerald-800/50 opacity-75'
+                      : 'border-zinc-800 hover:border-purple-500/50'
+                  }`}
+                >
+                  <div>
+                    <div className="flex items-center justify-between gap-2 mb-2">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400 bg-zinc-800 px-2.5 py-1 rounded-md">
+                        {item.category}
+                      </span>
+                      <button
+                        onClick={() => toggleWishlistStatus(item.id)}
+                        className={`text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-md border cursor-pointer transition-all ${
+                          item.status === 'Purchased'
+                            ? 'bg-emerald-950 text-emerald-400 border-emerald-800'
+                            : 'bg-zinc-800 text-zinc-300 border-zinc-700 hover:border-purple-500'
+                        }`}
+                      >
+                        {item.status}
+                      </button>
+                    </div>
+
+                    <h3
+                      className={`text-base font-bold mt-2 ${
+                        item.status === 'Purchased'
+                          ? 'line-through text-zinc-400'
+                          : 'text-white'
+                      }`}
+                    >
+                      {item.name}
+                    </h3>
+                  </div>
+
+                  <div className="mt-6 pt-4 border-t border-zinc-800/80 flex items-center justify-between">
+                    <div>
+                      <div className="text-xs font-semibold text-zinc-400">{item.store}</div>
+                      <div className="text-base font-black text-purple-400 mt-0.5">
+                        {item.price > 0 ? `${item.price.toLocaleString('cs-CZ')} Kč` : 'N/A'}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      {item.url && item.url !== '#' && (
+                        <a
+                          href={item.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="p-2 text-zinc-400 hover:text-white bg-zinc-800/60 rounded-lg transition-colors"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                        </a>
+                      )}
+                      <button
+                        onClick={() => deleteWishlist(item.id)}
+                        className="p-2 text-zinc-500 hover:text-rose-400 bg-zinc-800/40 rounded-lg transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </main>
+        )}
+
+        {/* TAB 3: GAME BACKLOG */}
+        {activeTab === 'backlog' && (
+          <main className="mt-8 space-y-6">
+            {/* SEARCH & FILTERS BAR */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-zinc-900/60 p-4 rounded-2xl border border-zinc-800/80">
+              <div className="relative flex-1">
+                <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />
+                <input
+                  type="text"
+                  placeholder="Search games by title..."
+                  value={gameSearch}
+                  onChange={(e) => setGameSearch(e.target.value)}
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl pl-10 pr-4 py-2 text-sm text-white focus:outline-none focus:border-purple-500"
+                />
+              </div>
+
+              {/* GENRE FILTER BUTTONS */}
+              <div className="flex flex-wrap items-center gap-1.5">
+                {['All', 'Racing/Sim', 'FPS', 'Action', 'RPG', 'Horror'].map((genre) => (
+                  <button
+                    key={genre}
+                    onClick={() => setSelectedGenre(genre)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                      selectedGenre === genre
+                        ? 'bg-purple-600 text-white'
+                        : 'bg-zinc-800/60 text-zinc-400 hover:text-white hover:bg-zinc-800'
+                    }`}
+                  >
+                    {genre}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                onClick={() => setIsGameModalOpen(true)}
+                className="flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-sm rounded-xl transition-all shrink-0"
+              >
+                <Plus className="w-4 h-4" />
+                Add Game
+              </button>
+            </div>
+
+            {/* GAMES GRID */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {filteredGames.map((game) => (
+                <div
+                  key={game.id}
+                  className="group relative bg-zinc-900/70 border border-zinc-800 hover:border-purple-500/50 rounded-2xl overflow-hidden transition-all flex flex-col justify-between"
+                >
+                  <div className="relative h-44 w-full overflow-hidden bg-zinc-950">
+                    <img
+                      src={game.image}
+                      alt={game.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 opacity-80 group-hover:opacity-100"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-transparent to-transparent" />
+
+                    {/* STATUS TAG */}
+                    <button
+                      onClick={() => cycleGameStatus(game.id)}
+                      className={`absolute top-3 right-3 text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-md border shadow-lg backdrop-blur-md cursor-pointer ${
+                        game.status === 'Playing'
+                          ? 'bg-purple-950/80 text-purple-300 border-purple-500'
+                          : game.status === 'Completed'
+                          ? 'bg-emerald-950/80 text-emerald-300 border-emerald-500'
+                          : game.status === 'Wishlist'
+                          ? 'bg-blue-950/80 text-blue-300 border-blue-500'
+                          : 'bg-zinc-900/80 text-zinc-400 border-zinc-700'
+                      }`}
+                    >
+                      {game.status}
+                    </button>
+                  </div>
+
+                  <div className="p-4 flex-1 flex flex-col justify-between">
+                    <div>
+                      <span className="text-[10px] font-bold text-purple-400 uppercase tracking-widest">
+                        {game.genre}
+                      </span>
+                      <h3 className="text-base font-bold text-white mt-0.5 line-clamp-1">
+                        {game.title}
+                      </h3>
+                      <p className="text-xs text-zinc-500 mt-1">{game.platform}</p>
+                    </div>
+
+                    <div className="mt-4 pt-3 border-t border-zinc-800/80 flex items-center justify-between">
+                      <span className="text-[11px] text-zinc-400">Click tag to switch status</span>
+                      <button
+                        onClick={() => deleteGame(game.id)}
+                        className="p-1.5 text-zinc-500 hover:text-rose-400 bg-zinc-800/40 rounded-lg transition-colors"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </main>
+        )}
+      </div>
+
+      {/* --- MODAL 1: ADD PART MODAL --- */}
+      {isPartModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl max-w-lg w-full p-6 relative shadow-2xl">
+            <button
+              onClick={() => setIsPartModalOpen(false)}
+              className="absolute top-4 right-4 text-zinc-400 hover:text-white"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <h3 className="text-xl font-bold text-white mb-4">Add Hardware Component</h3>
+
+            <form onSubmit={handleAddPart} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-zinc-400 uppercase mb-1">
+                  Component Name
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Intel Core i7-9700F"
+                    value={partName}
+                    onChange={(e) => setPartName(e.target.value)}
+                    className="flex-1 bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-purple-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => openAlzaSearch(partName)}
+                    className="px-3 py-2 bg-emerald-950 text-emerald-300 border border-emerald-800/60 rounded-xl text-xs font-bold hover:bg-emerald-900/60"
+                  >
+                    Alza
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => openDatartSearch(partName)}
+                    className="px-3 py-2 bg-blue-950 text-blue-300 border border-blue-800/60 rounded-xl text-xs font-bold hover:bg-blue-900/60"
+                  >
+                    DATART
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-zinc-400 uppercase mb-1">
+                  Category
+                </label>
+                <select
+                  value={partCategory}
+                  onChange={(e) => setPartCategory(e.target.value)}
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-purple-500"
+                >
+                  {HARDWARE_CATEGORIES.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-zinc-400 uppercase mb-1">
+                    Price (Kč)
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="4990"
+                    value={partPrice}
+                    onChange={(e) => setPartPrice(e.target.value)}
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-purple-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-zinc-400 uppercase mb-1">
+                    Store
+                  </label>
+                  <select
+                    value={partStore}
+                    onChange={(e) => setPartStore(e.target.value)}
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-purple-500"
+                  >
+                    {STORES.map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-zinc-400 uppercase mb-1">
+                  Product Link (URL)
+                </label>
+                <input
+                  type="url"
+                  placeholder="https://www.alza.cz/..."
+                  value={partUrl}
+                  onChange={(e) => setPartUrl(e.target.value)}
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-purple-500"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="w-full mt-2 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold rounded-xl hover:from-purple-500 hover:to-indigo-500 transition-all shadow-lg shadow-purple-600/30"
+              >
+                Save Component
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* --- MODAL 2: ADD WISHLIST ITEM MODAL --- */}
+      {isWishlistModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl max-w-lg w-full p-6 relative shadow-2xl">
+            <button
+              onClick={() => setIsWishlistModalOpen(false)}
+              className="absolute top-4 right-4 text-zinc-400 hover:text-white"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <h3 className="text-xl font-bold text-white mb-4">Add Wishlist Item</h3>
+
+            <form onSubmit={handleAddWishlist} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-zinc-400 uppercase mb-1">
+                  Item Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. RTX 4070 Super 12GB"
+                  value={wishName}
+                  onChange={(e) => setWishName(e.target.value)}
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-purple-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-zinc-400 uppercase mb-1">
+                    Price (Kč)
+                  </label>
+                  <input
+                    type="number"
+                    placeholder="17490"
+                    value={wishPrice}
+                    onChange={(e) => setWishPrice(e.target.value)}
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-purple-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-zinc-400 uppercase mb-1">
+                    Store
+                  </label>
+                  <select
+                    value={wishStore}
+                    onChange={(e) => setWishStore(e.target.value)}
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-purple-500"
+                  >
+                    {STORES.map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-zinc-400 uppercase mb-1">
+                  Product Link (URL)
+                </label>
+                <input
+                  type="url"
+                  placeholder="https://..."
+                  value={wishUrl}
+                  onChange={(e) => setWishUrl(e.target.value)}
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-purple-500"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="w-full mt-2 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold rounded-xl hover:from-purple-500 hover:to-indigo-500 transition-all"
+              >
+                Add to Wishlist
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* --- MODAL 3: ADD GAME MODAL --- */}
+      {isGameModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl max-w-lg w-full p-6 relative shadow-2xl">
+            <button
+              onClick={() => setIsGameModalOpen(false)}
+              className="absolute top-4 right-4 text-zinc-400 hover:text-white"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <h3 className="text-xl font-bold text-white mb-4">Add Game to Backlog</h3>
+
+            <form onSubmit={handleAddGame} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-zinc-400 uppercase mb-1">
+                  Game Title
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Forza Horizon 5"
+                  value={gameTitle}
+                  onChange={(e) => setGameTitle(e.target.value)}
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-purple-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-zinc-400 uppercase mb-1">
+                    Genre
+                  </label>
+                  <select
+                    value={gameGenre}
+                    onChange={(e) => setGameGenre(e.target.value)}
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-purple-500"
+                  >
+                    {['Racing/Sim', 'FPS', 'Action', 'RPG', 'Horror', 'Other'].map((g) => (
+                      <option key={g} value={g}>
+                        {g}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-zinc-400 uppercase mb-1">
+                    Status
+                  </label>
+                  <select
+                    value={gameStatus}
+                    onChange={(e) => setGameStatus(e.target.value)}
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-purple-500"
+                  >
+                    {['Playing', 'Completed', 'Wishlist', 'On Hold'].map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-zinc-400 uppercase mb-1">
+                  Image Cover URL
+                </label>
+                <input
+                  type="url"
+                  placeholder="https://images.unsplash.com/..."
+                  value={gameImage}
+                  onChange={(e) => setGameImage(e.target.value)}
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-purple-500"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="w-full mt-2 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold rounded-xl hover:from-purple-500 hover:to-indigo-500 transition-all"
+              >
+                Add Game
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
