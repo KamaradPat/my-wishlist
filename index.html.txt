@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Setup & Wishlist</title>
+    <style>
+        body {
+            background-color: #0d0d12;
+            color: #ffffff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 40px;
+        }
+        h1 {
+            color: #a855f7;
+            font-size: 2rem;
+            margin-bottom: 20px;
+        }
+        .card {
+            background-color: #181824;
+            border: 1px solid #2e2e48;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .badge {
+            background-color: #059669;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>My Setup & Hardware Hub 🕷️🖤</h1>
+    
+    <div class="card">
+        <h2>Current Rig Components</h2>
+        <p><strong>CPU:</strong> Intel Core i7-9700F <span class="badge">ACTIVE</span></p>
+        <p><strong>GPU:</strong> NVIDIA GeForce RTX 2060 Super 8GB <span class="badge">ACTIVE</span></p>
+    </div>
+</body>
+</html>
